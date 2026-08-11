@@ -1,0 +1,11 @@
+export const MONETARY_TOTAL_PRECISION = 19;
+export const MONETARY_TOTAL_SCALE = 4;
+
+export const UNIT_COST_PRECISION = 20;
+export const UNIT_COST_SCALE = 8;
+
+export const PHYSICAL_QUANTITY_PRECISION = 20;
+export const PHYSICAL_QUANTITY_SCALE = 8;
+
+export const RATIO_RATE_PERCENT_PRECISION = 18;
+export const RATIO_RATE_PERCENT_SCALE = 8;
