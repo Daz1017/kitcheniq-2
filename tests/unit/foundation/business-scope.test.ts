@@ -50,6 +50,32 @@ describe('Foundation business-scope primitive', () => {
     expect(isBusinessScope({ kind: 'restaurant', organizationId })).toBe(false);
   });
 
+  test('rejects organization scopes with extra location fields and profile-like data', () => {
+    expect(isOrganizationScope({ kind: 'organization', organizationId, locationId })).toBe(false);
+    expect(isOrganizationScope({ kind: 'organization', organizationId, organizationName: 'Anything' })).toBe(false);
+    expect(isOrganizationScope({ kind: 'organization', organizationId, role: 'admin' })).toBe(false);
+  });
+
+  test('rejects location scopes with extra fields and access-control-like data', () => {
+    expect(isLocationScope({ kind: 'location', organizationId, locationId, extra: true })).toBe(false);
+    expect(isLocationScope({ kind: 'location', organizationId, locationId, role: 'admin' })).toBe(false);
+  });
+
+  test('rejects class instances, dates, arrays, and null', () => {
+    class CustomObject {
+      public kind = 'organization';
+      public organizationId = organizationId;
+    }
+
+    const date = new Date();
+    const array = [1, 2, 3];
+
+    expect(isBusinessScope(new CustomObject())).toBe(false);
+    expect(isBusinessScope(date)).toBe(false);
+    expect(isBusinessScope(array)).toBe(false);
+    expect(isBusinessScope(null)).toBe(false);
+  });
+
   test('supports ordinary JSON serialization and deserialization', () => {
     const organizationScope = createOrganizationScope(organizationId);
     const locationScope = createLocationScope(organizationId, locationId);
@@ -76,8 +102,6 @@ describe('Foundation business-scope primitive', () => {
   });
 
   test('rejects arbitrary objects and non-plain values', () => {
-    expect(isBusinessScope(null)).toBe(false);
-    expect(isBusinessScope([])).toBe(false);
     expect(isBusinessScope({})).toBe(false);
     expect(isOrganizationScope('not-an-object')).toBe(false);
     expect(isLocationScope(42)).toBe(false);

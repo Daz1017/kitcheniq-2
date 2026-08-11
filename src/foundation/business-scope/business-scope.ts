@@ -37,7 +37,8 @@ export function isOrganizationScope(value: unknown): value is OrganizationScope 
   }
 
   const candidate = value as Record<string, unknown>;
-  return candidate.kind === 'organization' && typeof candidate.organizationId === 'string' && isUUIDv4(candidate.organizationId);
+  const ownKeys = Object.keys(candidate);
+  return ownKeys.length === 2 && ownKeys.includes('kind') && ownKeys.includes('organizationId') && candidate.kind === 'organization' && typeof candidate.organizationId === 'string' && isUUIDv4(candidate.organizationId);
 }
 
 export function isLocationScope(value: unknown): value is LocationScope {
@@ -46,7 +47,8 @@ export function isLocationScope(value: unknown): value is LocationScope {
   }
 
   const candidate = value as Record<string, unknown>;
-  return candidate.kind === 'location' && typeof candidate.organizationId === 'string' && isUUIDv4(candidate.organizationId) && typeof candidate.locationId === 'string' && isUUIDv4(candidate.locationId);
+  const ownKeys = Object.keys(candidate);
+  return ownKeys.length === 3 && ownKeys.includes('kind') && ownKeys.includes('organizationId') && ownKeys.includes('locationId') && candidate.kind === 'location' && typeof candidate.organizationId === 'string' && isUUIDv4(candidate.organizationId) && typeof candidate.locationId === 'string' && isUUIDv4(candidate.locationId);
 }
 
 export function isBusinessScope(value: unknown): value is BusinessScope {
@@ -70,5 +72,10 @@ function brandLocationId(value: string): LocationId {
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
