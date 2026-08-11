@@ -27,6 +27,11 @@ describe('Foundation user-identity primitive', () => {
     expect(isAuthenticationPrincipalRef({ authority: 'supabase_auth', subject: 'opaque-principal', extra: true })).toBe(false);
   });
 
+  test('rejects malformed application user IDs', () => {
+    expect(() => createApplicationUserIdentity('not-a-uuid', principal)).toThrow();
+    expect(() => createApplicationUserIdentity('123e4567-e89b-11d3-a456-426614174000', principal)).toThrow();
+  });
+
   test('accepts canonical identity structures and rejects extras', () => {
     const identity = createApplicationUserIdentity(userId, principal);
 
@@ -35,6 +40,8 @@ describe('Foundation user-identity primitive', () => {
     expect(isApplicationUserIdentity({ userId, principal, email: 'user@example.com' })).toBe(false);
     expect(isApplicationUserIdentity({ userId, principal, role: 'admin' })).toBe(false);
     expect(isApplicationUserIdentity({ userId, principal, organizationId: '123e4567-e89b-42d3-a456-426614174001' })).toBe(false);
+    expect(isApplicationUserIdentity({ userId, principal, disabled: true })).toBe(false);
+    expect(isApplicationUserIdentity({ userId, principal, token: 'secret' })).toBe(false);
   });
 
   test('preserves stable application user identity across principal changes', () => {
