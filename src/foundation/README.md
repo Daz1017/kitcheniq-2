@@ -11,5 +11,6 @@ It includes:
 * Foundation dimension and canonical base-unit primitives for the frozen unit substrate (`mass`, `volume`, `count`; `g`, `mL`, `ea`).
 * Foundation quantity primitives for canonical decimal quantities over the frozen unit substrate.
 * Foundation business-scope primitives for immutable organization and location scope representation.
+* Foundation identity primitives for immutable application-user identity and Supabase-auth principal references.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
