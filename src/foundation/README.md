@@ -8,5 +8,6 @@ It includes:
 * `FoundationErrorContract` as the stable error contract that includes `code`, `category`, `userMessage`, `correlationId`, and `retryable`.
 * Foundation decimal primitives for authoritative decimal parsing, exact arithmetic, and explicit half-up rounding.
 * Foundation value-state primitives for representing `known`, `unknown`, and `not_applicable` without fallback behavior.
+* Foundation dimension and canonical base-unit primitives for the frozen unit substrate (`mass`, `volume`, `count`; `g`, `mL`, `ea`).
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
