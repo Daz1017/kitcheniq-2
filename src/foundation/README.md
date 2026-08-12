@@ -7,6 +7,7 @@ It includes:
 * `CorrelationId` as a UUIDv4-based identifier primitive for request tracing and diagnostics.
 * `FoundationErrorContract` as the stable error contract that includes `code`, `category`, `userMessage`, `correlationId`, and `retryable`.
 * Foundation RBAC primitives for canonical role classification (`RoleClass`, `ROLE_CLASSES`, `isRoleClass`).
+* Foundation auth-assurance primitives for role-derived authentication assurance policy (`requiredAssuranceForRole`, `roleRequiresAal2`, `AUTH_ASSURANCE_LEVELS`).
 * Foundation decimal primitives for authoritative decimal parsing, exact arithmetic, and explicit half-up rounding.
 * Foundation value-state primitives for representing `known`, `unknown`, and `not_applicable` without fallback behavior.
 * Foundation dimension and canonical base-unit primitives for the frozen unit substrate (`mass`, `volume`, `count`; `g`, `mL`, `ea`).
