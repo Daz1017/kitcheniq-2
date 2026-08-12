@@ -18,5 +18,6 @@ It includes:
 * Foundation business-scope primitives for immutable organization and location scope representation.
 * Foundation identity primitives for immutable application-user identity and Supabase-auth principal references.
 * Foundation external identifier primitives for opaque, source-namespaced identifiers that are kept separate from KitchenIQ entity identifiers.
+* Foundation external identifier mapping references for explicitly connecting an external reference to a KitchenIQ UUIDv4 entity identifier without persistence or lookup.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
