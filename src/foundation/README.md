@@ -17,5 +17,6 @@ It includes:
 * Foundation quantity primitives for canonical decimal quantities over the frozen unit substrate.
 * Foundation business-scope primitives for immutable organization and location scope representation.
 * Foundation identity primitives for immutable application-user identity and Supabase-auth principal references.
+* Foundation external identifier primitives for opaque, source-namespaced identifiers that are kept separate from KitchenIQ entity identifiers.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
