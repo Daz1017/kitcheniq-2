@@ -9,6 +9,7 @@ It includes:
 * Foundation RBAC primitives for canonical role classification (`RoleClass`, `ROLE_CLASSES`, `isRoleClass`).
 * Foundation auth-assurance primitives for role-derived authentication assurance policy (`requiredAssuranceForRole`, `roleRequiresAal2`, `AUTH_ASSURANCE_LEVELS`).
 * Foundation privileged-operation classification primitives for canonical privileged operation metadata (`PRIVILEGED_OPERATION_CLASSES`, `PrivilegedOperationClass`, `isPrivilegedOperationClass`).
+* Foundation environment classification primitives for execution and data environment distinction (`ENVIRONMENT_CLASSES`, `EnvironmentClass`, `isEnvironmentClass`, `isProductionEnvironment`, `isLowerEnvironment`).
 * Foundation decimal primitives for authoritative decimal parsing, exact arithmetic, and explicit half-up rounding.
 * Foundation value-state primitives for representing `known`, `unknown`, and `not_applicable` without fallback behavior.
 * Foundation dimension and canonical base-unit primitives for the frozen unit substrate (`mass`, `volume`, `count`; `g`, `mL`, `ea`).
