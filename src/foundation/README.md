@@ -20,5 +20,6 @@ It includes:
 * Foundation external identifier primitives for opaque, source-namespaced identifiers that are kept separate from KitchenIQ entity identifiers.
 * Foundation external identifier mapping references for explicitly connecting an external reference to a KitchenIQ UUIDv4 entity identifier without persistence or lookup.
 * Foundation idempotency key primitives for caller-supplied opaque keys without operation, scope, or persistence binding.
+* Foundation event identity primitives for immutable UUIDv4-based asynchronous event identity.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
