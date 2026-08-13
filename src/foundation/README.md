@@ -26,6 +26,7 @@ It includes:
 * Foundation event type primitives for open, opaque asynchronous event type values.
 * Foundation event producer primitives for open, opaque asynchronous event producer values without a registry or naming grammar.
 * Foundation event schema-version primitives for open, opaque asynchronous event schema version values without a registry or enforced naming grammar.
+* Foundation event delivery governance policy metadata for a transactional outbox or equivalent and an `at_least_once` delivery guarantee.
 * Foundation currency-code primitives for open, opaque currency denomination identifiers that remain distinct from identity and classification primitives.
 * Foundation money value-object primitives for monetary amounts paired with a validated currency code.
 * Foundation monetary precision profiles for the frozen `monetary_total` (`19`, `4`) and `unit_cost` (`20`, `8`) precision/scale pairs.
