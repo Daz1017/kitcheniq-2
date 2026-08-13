@@ -33,5 +33,6 @@ It includes:
 * Foundation backup and restore policy metadata for managed encrypted backups, PITR or equivalent recovery, `30` rolling retention days, pre-high-risk migration recovery points, and `quarterly` restore exercises.
 * Foundation operational log retention metadata for `30` searchable retention days.
 * Foundation operational health signal classification for `error`, `import_failure`, `integration_failure`, `event_backlog`, `job_failure`, and `backup_failure`.
+* Foundation migration governance policy metadata for source-controlled ordered history, forward-only evolution, governed repair, restartable/idempotent data migration where practical, and controlled high-risk/destructive promotion.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
