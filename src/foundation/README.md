@@ -21,6 +21,7 @@ It includes:
 * Foundation external identifier primitives for opaque, source-namespaced identifiers that are kept separate from KitchenIQ entity identifiers.
 * Foundation external identifier mapping references for explicitly connecting an external reference to a KitchenIQ UUIDv4 entity identifier without persistence or lookup.
 * Foundation idempotency key primitives for caller-supplied opaque keys without operation, scope, or persistence binding.
+* Foundation idempotency governance policy metadata for authoritative operation/scope/idempotency-key/request-hash/result-reference binding, material-difference rejection, and a 90-day minimum replay protection floor with permanent external-source uniqueness protection where available.
 * Foundation event identity primitives for immutable UUIDv4-based asynchronous event identity.
 * Foundation event type primitives for open, opaque asynchronous event type values.
 * Foundation event producer primitives for open, opaque asynchronous event producer values without a registry or naming grammar.
