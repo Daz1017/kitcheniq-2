@@ -23,5 +23,6 @@ It includes:
 * Foundation event identity primitives for immutable UUIDv4-based asynchronous event identity.
 * Foundation event type primitives for open, opaque asynchronous event type values.
 * Foundation event producer primitives for open, opaque asynchronous event producer values without a registry or naming grammar.
+* Foundation event schema-version primitives for open, opaque asynchronous event schema version values without a registry or enforced naming grammar.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
