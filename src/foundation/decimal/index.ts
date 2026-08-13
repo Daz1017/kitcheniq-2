@@ -9,3 +9,4 @@ export {
   UNIT_COST_PRECISION,
   UNIT_COST_SCALE
 } from './precision';
+export * from './non-monetary-precision-profile';

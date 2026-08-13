@@ -12,6 +12,7 @@ It includes:
 * Foundation environment classification primitives for execution and data environment distinction (`ENVIRONMENT_CLASSES`, `EnvironmentClass`, `isEnvironmentClass`, `isProductionEnvironment`, `isLowerEnvironment`).
 * Foundation configuration sensitivity classification primitives for explicit secret/public configuration distinction (`CONFIGURATION_SENSITIVITIES`, `ConfigurationSensitivity`, `isConfigurationSensitivity`, `isPublicClientConfiguration`, `isSecretConfiguration`).
 * Foundation decimal primitives for authoritative decimal parsing, exact arithmetic, and explicit half-up rounding.
+* Foundation non-monetary precision profiles for the frozen `physical_quantity` (`20`, `8`) and `ratio_rate_percent` (`18`, `8`) precision/scale pairs.
 * Foundation value-state primitives for representing `known`, `unknown`, and `not_applicable` without fallback behavior.
 * Foundation dimension and canonical base-unit primitives for the frozen unit substrate (`mass`, `volume`, `count`; `g`, `mL`, `ea`).
 * Foundation quantity primitives for canonical decimal quantities over the frozen unit substrate.
