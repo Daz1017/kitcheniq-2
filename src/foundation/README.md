@@ -32,5 +32,6 @@ It includes:
 * Foundation recovery objective primitives for `rpo` (`1` hour maximum) and `rto` (`4` hours maximum).
 * Foundation backup and restore policy metadata for managed encrypted backups, PITR or equivalent recovery, `30` rolling retention days, pre-high-risk migration recovery points, and `quarterly` restore exercises.
 * Foundation operational log retention metadata for `30` searchable retention days.
+* Foundation operational health signal classification for `error`, `import_failure`, `integration_failure`, `event_backlog`, `job_failure`, and `backup_failure`.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
