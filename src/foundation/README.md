@@ -26,5 +26,6 @@ It includes:
 * Foundation event schema-version primitives for open, opaque asynchronous event schema version values without a registry or enforced naming grammar.
 * Foundation currency-code primitives for open, opaque currency denomination identifiers that remain distinct from identity and classification primitives.
 * Foundation money value-object primitives for monetary amounts paired with a validated currency code.
+* Foundation monetary precision profiles for the frozen `monetary_total` (`19`, `4`) and `unit_cost` (`20`, `8`) precision/scale pairs.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
