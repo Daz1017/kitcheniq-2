@@ -30,5 +30,6 @@ It includes:
 * Foundation monetary precision profiles for the frozen `monetary_total` (`19`, `4`) and `unit_cost` (`20`, `8`) precision/scale pairs.
 * Foundation audit retention profiles for `financial_security` (`7` years) and `protected_operational` (`2` years).
 * Foundation recovery objective primitives for `rpo` (`1` hour maximum) and `rto` (`4` hours maximum).
+* Foundation backup and restore policy metadata for managed encrypted backups, PITR or equivalent recovery, `30` rolling retention days, pre-high-risk migration recovery points, and `quarterly` restore exercises.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
