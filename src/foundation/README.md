@@ -37,5 +37,6 @@ It includes:
 * Foundation operational health signal classification for `error`, `import_failure`, `integration_failure`, `event_backlog`, `job_failure`, and `backup_failure`.
 * Foundation migration governance policy metadata for source-controlled ordered history, forward-only evolution, governed repair, restartable/idempotent data migration where practical, and controlled high-risk/destructive promotion.
 * Foundation deployment governance policy metadata for reproducible revision-bound artifacts, required verification, compatibility sequencing, staging, explicit approval, and production protections.
+* Foundation runtime environment loader primitives for fail-closed `KITCHENIQ_ENVIRONMENT` resolution and automated-test runtime safety enforcement.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.

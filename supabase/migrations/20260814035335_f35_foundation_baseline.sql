@@ -1,0 +1,3 @@
+-- F-35 foundation baseline migration.
+-- Intentionally no KitchenIQ domain/application schema is introduced at this checkpoint.
+-- Migration execution is proven by ordered application history during local db reset.
