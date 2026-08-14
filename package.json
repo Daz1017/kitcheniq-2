@@ -9,6 +9,8 @@
     "db:stop": "supabase stop",
     "db:status": "supabase status",
     "db:reset": "supabase db reset",
+    "test:db": "supabase test db",
+    "test:auth:local": "npm run db:reset && npm run build && node scripts/f36-local-auth-integration.js",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "KITCHENIQ_ENVIRONMENT=automated_test jest --coverage",
@@ -26,6 +28,7 @@
     "typescript": "5.2.2"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.112.3",
     "big.js": "^7.0.1"
   }
 }
