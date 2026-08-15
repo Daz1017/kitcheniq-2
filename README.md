@@ -21,6 +21,12 @@ Use `npm run test:db` for local pgTAP database tests and `npm run test:auth:loca
 
 F-35 authorizes local execution only. Remote project linking and deployment commands are intentionally out of scope.
 
+## F-37 authorization and write boundary
+
+F-37 adds persisted organization/location scope, explicit private permission mappings, exact-scope default-deny authorization, protected-table RLS, and owner/admin AAL2 enforcement. Direct authenticated table writes remain denied. Create Location is available only through a server-only Supabase privileged credential and an authorization-checking database command; the secret must never enter browser/public configuration. F-37 does not add MFA enrollment UI, audit persistence, idempotency, outbox delivery, or Module 1–11 permission catalogs/schema.
+
+Run `npm run test:security:local` after starting the local Supabase stack to verify real Auth sessions, RLS, direct-write denial, and the server-mediated write boundary.
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:

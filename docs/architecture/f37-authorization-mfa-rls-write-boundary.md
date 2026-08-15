@@ -1,0 +1,9 @@
+# F-37 Authorization, MFA, RLS, and Write Boundary
+
+The database is the authoritative authorization boundary. Default behavior is deny: a persisted application user, exact scope assignment, explicit permission mapping, and sufficient verified JWT AAL are all required. Role class alone grants nothing, there is no role hierarchy, and organization/location assignments do not inherit in either direction.
+
+The frozen role classes remain `owner`, `admin`, `manager`, `staff`, and `read_only`. Owner and admin assignments require `aal2`; manager, staff, and read_only require at least `aal1`. Protected organization and location reads use RLS with exact-scope permission evaluation. Authenticated clients receive no direct insert, update, or delete privileges on those tables.
+
+Create Location is the narrow F-37 server-mediated write. The server verifies the Supabase access token through the F-36 boundary, derives the principal and stable ApplicationUserId, reads the verified AAL, and calls a service-only RPC. The privileged Supabase credential is server-only and bypass-capable for database reachability, so the database command performs KitchenIQ authorization explicitly and does not treat the credential as authorization.
+
+F-37 does not build MFA enrollment or factor-management UI, production owner bootstrap, account administration, audit persistence, provenance persistence, idempotency storage, event outbox delivery, or Module 1–11 permission catalogs/schema. F-39 will add audit/provenance. Local verification uses real Auth sessions and database fixtures; no remote Supabase infrastructure or committed secret is required.

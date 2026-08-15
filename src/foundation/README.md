@@ -38,5 +38,6 @@ It includes:
 * Foundation migration governance policy metadata for source-controlled ordered history, forward-only evolution, governed repair, restartable/idempotent data migration where practical, and controlled high-risk/destructive promotion.
 * Foundation deployment governance policy metadata for reproducible revision-bound artifacts, required verification, compatibility sequencing, staging, explicit approval, and production protections.
 * Foundation runtime environment loader primitives for fail-closed `KITCHENIQ_ENVIRONMENT` resolution and automated-test runtime safety enforcement.
+* Foundation F-37 authorization and scope infrastructure: explicit permission mappings, exact organization/location assignments, database-authoritative default-deny RLS, owner/admin AAL2 enforcement, and a server-only Create Location write boundary. Direct authenticated writes remain denied. F-37 does not build MFA enrollment UI or complete privileged-operation auditing; F-39 owns audit/provenance, and Module permission catalogs remain deferred.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.
