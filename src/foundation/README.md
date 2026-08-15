@@ -39,5 +39,6 @@ It includes:
 * Foundation deployment governance policy metadata for reproducible revision-bound artifacts, required verification, compatibility sequencing, staging, explicit approval, and production protections.
 * Foundation runtime environment loader primitives for fail-closed `KITCHENIQ_ENVIRONMENT` resolution and automated-test runtime safety enforcement.
 * Foundation F-37 authorization and scope infrastructure: explicit permission mappings, exact organization/location assignments, database-authoritative default-deny RLS, owner/admin AAL2 enforcement, and a server-only Create Location write boundary. Direct authenticated writes remain denied. F-37 does not build MFA enrollment UI or complete privileged-operation auditing; F-39 owns audit/provenance, and Module permission catalogs remain deferred.
+* Foundation F-38 database integrity contracts in the internal, non-exposed `foundation` schema: exact PostgreSQL `NUMERIC` persistence domains, open currency-code validation, canonical `g`/`mL`/`ea` units, explicit value-state pairing, UUIDv4 enforcement for KitchenIQ-owned IDs, and namespaced external-identifier uniqueness. F-38 does not add module tables, currency catalogs, target entity-type vocabularies, or unit conversions.
 
 Foundation owns the shared primitives and contracts in `src/foundation` and exposes them for other modules to consume.

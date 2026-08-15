@@ -1,0 +1,9 @@
+# F-38 Database Domain and Numeric Integrity
+
+F-38 owns reusable contracts in the internal, non-exposed `foundation` PostgreSQL schema. It defines exactly four persistence-boundary numeric domains: `monetary_total_amount` as `NUMERIC(19,4)`, `unit_cost_amount` as `NUMERIC(20,8)`, `physical_quantity` as `NUMERIC(20,8)`, and `ratio_rate_percent` as `NUMERIC(18,8)`. PostgreSQL performs scale enforcement at persistence; this is distinct from in-memory `DecimalString` precision and does not change the generic F-23 Money contract. An owning contract chooses total versus unit-cost persistence.
+
+`currency_code` remains an open, exact text vocabulary: nonempty values without surrounding whitespace are accepted without ISO-4217 membership, case normalization, a catalog, or a default. `canonical_unit_code` accepts exactly `g`, `mL`, and `ea`; no contextual units or conversions are defined. `value_state` accepts exactly `known`, `unknown`, and `not_applicable`. The reusable state/value validator requires a present value only for `known`; unknown and not-applicable require absence.
+
+KitchenIQ-owned persisted surrogate IDs in F-36/F-37 are constrained to UUIDv4 through the Foundation validator. Supabase-owned `auth.users.id` remains a provider principal and is not redefined as a KitchenIQ identity. External mappings persist opaque, exact `source_namespace` and `external_id` values with permanent uniqueness on that pair and a UUIDv4 `kitchen_iq_id`; no target entity-type vocabulary is invented.
+
+F-38 does not create generic Money or quantity application tables, module tables, audit/provenance, idempotency, events/outbox, currency catalogs, default currencies, or cross-dimension conversion logic. Future owning records persist an amount domain plus an explicit currency code, or a quantity domain plus canonical unit, according to their own frozen contract.

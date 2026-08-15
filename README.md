@@ -27,6 +27,10 @@ F-37 adds persisted organization/location scope, explicit private permission map
 
 Run `npm run test:security:local` after starting the local Supabase stack to verify real Auth sessions, RLS, direct-write denial, and the server-mediated write boundary.
 
+## F-38 database domain and numeric integrity
+
+F-38 adds the internal, non-exposed `foundation` database schema. It provides the exact four PostgreSQL `NUMERIC` persistence domains, open structural currency codes, canonical `g`/`mL`/`ea` units, explicit `known`/`unknown`/`not_applicable` state validation, UUIDv4 checks for KitchenIQ-owned identifiers, and permanently unique namespaced external-identifier mappings. Persistence-boundary scale enforcement is database behavior and remains distinct from in-memory decimal precision. No module tables, currency catalog, target entity-type vocabulary, or unit conversions are introduced.
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:
