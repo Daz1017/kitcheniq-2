@@ -1,0 +1,7 @@
+# F-39 Audit and Provenance Persistence
+
+F-39 provides durable append-oriented audit infrastructure in the internal `private` database boundary. Audit records are not exposed through the Data API and have no ordinary update, delete, truncate, or client insert path. The database supplies authoritative `occurred_at`; the record stores an authenticated KitchenIQ `ApplicationUserId`, exact action and target identifiers, explicit organization/location scope, generated F-03 `CorrelationId`, source, process, rule version, F-26 retention profile, and structured JSONB change context.
+
+Create Location is the first audited Foundation command. The server verifies the F-36 principal and ApplicationUser mapping, generates a CorrelationId, and passes it to the F-39 command. Authorization, location insertion, and audit append occur in one database transaction. If audit persistence fails, the location insertion rolls back. The change context records only the created location and organization identifiers; access tokens, secret keys, passwords, and raw authorization headers are excluded.
+
+F-39 uses `protected_operational` for Create Location and preserves the frozen retention profile vocabulary without converting years into fixed days. Audit storage is separate from F-40 event/outbox infrastructure. F-39 does not invent system actors, module action catalogs, audit reporting permissions, purge/legal-hold semantics, idempotency, or module-specific calculation provenance. Future owning modules supply their own provenance evidence.

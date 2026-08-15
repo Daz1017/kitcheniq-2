@@ -31,6 +31,10 @@ Run `npm run test:security:local` after starting the local Supabase stack to ver
 
 F-38 adds the internal, non-exposed `foundation` database schema. It provides the exact four PostgreSQL `NUMERIC` persistence domains, open structural currency codes, canonical `g`/`mL`/`ea` units, explicit `known`/`unknown`/`not_applicable` state validation, UUIDv4 checks for KitchenIQ-owned identifiers, and permanently unique namespaced external-identifier mappings. Persistence-boundary scale enforcement is database behavior and remains distinct from in-memory decimal precision. No module tables, currency catalog, target entity-type vocabulary, or unit conversions are introduced.
 
+## F-39 audit and provenance persistence
+
+F-39 adds internal append-oriented audit records with database-generated occurrence time, authenticated ApplicationUserId actor, exact action/target/scope, generated CorrelationId propagation, source/process/rule version, structured JSONB change context, and the F-26 retention profile. Audited Create Location mutation and audit append are atomic; audit rows cannot be updated or deleted through ordinary roles and are not exposed through the Data API. Audit infrastructure remains separate from F-40 events/outbox and future module-specific provenance.
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:

@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { resolveAuthenticatedApplicationUser } from './supabase-auth';
 import { type SupabaseServerConfig } from './supabase-server-config';
 import { isUUIDv4 } from '../identifiers';
+import { createCorrelationId, type CorrelationId } from '../correlation';
 
 export class CreateLocationAuthorizationError extends Error {
   public constructor() {
@@ -15,9 +16,20 @@ export async function createLocation(
   organizationId: string,
   config: SupabaseServerConfig
 ): Promise<string> {
+  const result = await createLocationWithAudit(accessToken, organizationId, config);
+  return result.locationId;
+}
+
+export async function createLocationWithAudit(
+  accessToken: string,
+  organizationId: string,
+  config: SupabaseServerConfig
+): Promise<Readonly<{ locationId: string; correlationId: CorrelationId }>> {
   if (!isUUIDv4(organizationId)) {
     throw new CreateLocationAuthorizationError();
   }
+
+  const correlationId = createCorrelationId();
 
   const verificationClient = createClient(config.url, config.publicKey);
   const { data: claimsResult, error: claimsError } = await verificationClient.auth.getClaims(accessToken);
@@ -36,11 +48,12 @@ export async function createLocation(
     p_auth_principal_id: principalId,
     p_application_user_id: identity.userId,
     p_aal: aal,
-    p_organization_id: organizationId
+    p_organization_id: organizationId,
+    p_correlation_id: correlationId
   });
   if (result.error || typeof result.data !== 'string' || !isUUIDv4(result.data)) {
     throw new CreateLocationAuthorizationError();
   }
 
-  return result.data;
+  return { locationId: result.data, correlationId };
 }

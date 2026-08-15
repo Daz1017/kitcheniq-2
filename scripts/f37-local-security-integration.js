@@ -3,6 +3,7 @@ const { execFileSync, spawnSync } = require('node:child_process');
 const { createClient } = require('@supabase/supabase-js');
 const {
   createLocation,
+  createLocationWithAudit,
   loadSupabaseServerConfig,
   resolveAuthenticatedApplicationUser
 } = require('../dist/foundation/runtime');
@@ -20,6 +21,12 @@ function localStatus() {
 function sql(text) {
   const result = spawnSync('docker', ['exec', '-i', 'supabase_db_kitcheniq-2', 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', '-q'], { input: text, encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
+}
+
+function query(text) {
+  const result = spawnSync('docker', ['exec', '-i', 'supabase_db_kitcheniq-2', 'psql', '-U', 'postgres', '-At', '-v', 'ON_ERROR_STOP=1'], { input: text, encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
 }
 
 async function createUser(client, label) {
@@ -69,13 +76,34 @@ async function main() {
   assert.ok(directUpdate.error, 'direct authenticated location update is denied');
   const directDelete = await authorizedClient.from('locations').delete().eq('id', '123e4567-e89b-42d3-a456-426614174033');
   assert.ok(directDelete.error, 'direct authenticated location delete is denied');
-  const createdLocationId = await createLocation(first.accessToken, organizationId, serverConfig);
+  const beforeUnauthorizedAuditCount = Number(query("select count(*) from private.audit_records where action = 'foundation.location.create';"));
+  const createdResult = await createLocationWithAudit(first.accessToken, organizationId, serverConfig);
+  const createdLocationId = createdResult.locationId;
+  const audit = JSON.parse(query(`select row_to_json(audit_record) from private.audit_records as audit_record where target_id = '${createdLocationId}'`));
+  assert.equal(audit.actor_application_user_id, firstIdentity.userId);
+  assert.equal(audit.action, 'foundation.location.create');
+  assert.equal(audit.target_kind, 'location');
+  assert.equal(audit.target_id, createdLocationId);
+  assert.equal(audit.scope_kind, 'organization');
+  assert.equal(audit.organization_id, organizationId);
+  assert.equal(audit.location_id, null);
+  assert.equal(audit.correlation_id, createdResult.correlationId);
+  assert.equal(audit.source, 'server_command');
+  assert.equal(audit.process, 'foundation.create_location');
+  assert.equal(audit.rule_version, '1');
+  assert.equal(audit.retention_profile, 'protected_operational');
+  assert.equal(audit.change_context.before, null);
+  assert.equal(audit.change_context.after.locationId, createdLocationId);
+  assert.equal(audit.change_context.after.organizationId, organizationId);
+  assert.ok(!JSON.stringify(audit.change_context).match(/token|secret|authorization/i));
   const created = await authorizedClient.from('locations').select('id').eq('id', createdLocationId);
   assert.equal(created.error, null);
   assert.equal(created.data.length, 0, 'organization scope does not inherit location read');
   await assert.rejects(() => createLocation(second.accessToken, organizationId, serverConfig));
   await assert.rejects(() => createLocation(first.accessToken, secondOrganizationId, serverConfig));
-  console.log(JSON.stringify({ realAuthUsers: 2, exactOrganizationRead: 'PASS', unauthorizedRead: 'PASS', directOrganizationInsert: 'DENIED', directLocationInsert: 'DENIED', directLocationUpdate: 'DENIED', directLocationDelete: 'DENIED', serverCreateLocation: 'PASS', unauthorizedServerWrite: 'DENIED', organizationScopeNoLocationInheritance: 'PASS', callerIdentitySpoof: 'DENIED', callerAalSpoof: 'NOT CLIENT-CONTROLLED' }, null, 2));
+  const afterUnauthorizedAuditCount = Number(query("select count(*) from private.audit_records where action = 'foundation.location.create';"));
+  assert.equal(afterUnauthorizedAuditCount, beforeUnauthorizedAuditCount + 1);
+  console.log(JSON.stringify({ realAuthUsers: 2, exactOrganizationRead: 'PASS', unauthorizedRead: 'PASS', directOrganizationInsert: 'DENIED', directLocationInsert: 'DENIED', directLocationUpdate: 'DENIED', directLocationDelete: 'DENIED', serverCreateLocation: 'PASS', durableAuditRecord: 'PASS', unauthorizedServerWrite: 'DENIED', unauthorizedAudit: 'NONE', organizationScopeNoLocationInheritance: 'PASS', callerIdentitySpoof: 'DENIED', callerAalSpoof: 'NOT CLIENT-CONTROLLED' }, null, 2));
 }
 
 main().catch((error) => { console.error(error.message); process.exitCode = 1; });
