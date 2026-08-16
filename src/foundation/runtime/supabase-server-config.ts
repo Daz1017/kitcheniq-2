@@ -1,9 +1,11 @@
 import { type SupabasePublicConfig } from './supabase-public-config';
+import { type OperationalLogSink } from './logger';
 
 export const KITCHENIQ_SUPABASE_SECRET_KEY_VARIABLE = 'KITCHENIQ_SUPABASE_SECRET_KEY' as const;
 
 export type SupabaseServerConfig = SupabasePublicConfig & Readonly<{
   readonly secretKey: string;
+  readonly operationalLogSink?: OperationalLogSink;
 }>;
 
 export function loadSupabaseServerConfig(source: NodeJS.ProcessEnv = process.env): SupabaseServerConfig {

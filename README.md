@@ -41,6 +41,10 @@ F-40 adds internal idempotency records, immutable Foundation event envelopes, an
 
 The service-only outbox worker uses leased row-lock claims and provides at-least-once delivery with redelivery after lease expiry. It does not claim exactly-once delivery, add a broker, expose client delivery APIs, or define module event catalogs. F-40 idempotency records are retained indefinitely, satisfying the frozen 90-day replay-protection minimum.
 
+## F-41 runtime observability and error boundaries
+
+F-41 adds AsyncLocalStorage correlation propagation, exact `debug`/`info`/`warn`/`error` structured JSON logging, recursive `[REDACTED]` handling, service-only durable operational-log append/search boundaries, exact 30-day retention with daily `pg_cron`, and a safe boundary around the frozen F-03 error contract. Audit records, events, and operational logs remain separate. The six frozen F-30 health signals are preserved without automatic backlog thresholds, external observability providers, or external alert transports. F-42 owns backup-health integration. See [docs/architecture/f41-runtime-observability-error-boundaries.md](docs/architecture/f41-runtime-observability-error-boundaries.md).
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:
