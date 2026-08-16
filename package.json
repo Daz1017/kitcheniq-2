@@ -12,6 +12,7 @@
     "test:db": "supabase test db",
     "test:auth:local": "npm run db:reset && npm run build && node scripts/f36-local-auth-integration.js",
     "test:security:local": "npm run build && node scripts/f37-local-security-integration.js",
+    "test:reliability:local": "npm run build && node scripts/f40-local-reliability-integration.js",
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "KITCHENIQ_ENVIRONMENT=automated_test jest --coverage",

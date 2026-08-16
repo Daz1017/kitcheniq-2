@@ -35,6 +35,12 @@ F-38 adds the internal, non-exposed `foundation` database schema. It provides th
 
 F-39 adds internal append-oriented audit records with database-generated occurrence time, authenticated ApplicationUserId actor, exact action/target/scope, generated CorrelationId propagation, source/process/rule version, structured JSONB change context, and the F-26 retention profile. Audited Create Location mutation and audit append are atomic; audit rows cannot be updated or deleted through ordinary roles and are not exposed through the Data API. Audit infrastructure remains separate from F-40 events/outbox and future module-specific provenance.
 
+## F-40 idempotency, events, and outbox
+
+F-40 adds internal idempotency records, immutable Foundation event envelopes, and a transactional PostgreSQL outbox. Create Location binds operation, exact organization scope, the required F-17 IdempotencyKey, and a SHA-256 hash of its canonical material request. Same-request replay returns the original location without duplicate mutation, audit, event, or outbox records; materially different reuse is rejected. The location, F-39 audit, event, outbox, and idempotency result commit atomically.
+
+The service-only outbox worker uses leased row-lock claims and provides at-least-once delivery with redelivery after lease expiry. It does not claim exactly-once delivery, add a broker, expose client delivery APIs, or define module event catalogs. F-40 idempotency records are retained indefinitely, satisfying the frozen 90-day replay-protection minimum.
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:

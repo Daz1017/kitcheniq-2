@@ -77,7 +77,7 @@ async function main() {
   const directDelete = await authorizedClient.from('locations').delete().eq('id', '123e4567-e89b-42d3-a456-426614174033');
   assert.ok(directDelete.error, 'direct authenticated location delete is denied');
   const beforeUnauthorizedAuditCount = Number(query("select count(*) from private.audit_records where action = 'foundation.location.create';"));
-  const createdResult = await createLocationWithAudit(first.accessToken, organizationId, serverConfig);
+  const createdResult = await createLocationWithAudit(first.accessToken, organizationId, 'f37-audited-create', serverConfig);
   const createdLocationId = createdResult.locationId;
   const audit = JSON.parse(query(`select row_to_json(audit_record) from private.audit_records as audit_record where target_id = '${createdLocationId}'`));
   assert.equal(audit.actor_application_user_id, firstIdentity.userId);
@@ -99,8 +99,8 @@ async function main() {
   const created = await authorizedClient.from('locations').select('id').eq('id', createdLocationId);
   assert.equal(created.error, null);
   assert.equal(created.data.length, 0, 'organization scope does not inherit location read');
-  await assert.rejects(() => createLocation(second.accessToken, organizationId, serverConfig));
-  await assert.rejects(() => createLocation(first.accessToken, secondOrganizationId, serverConfig));
+  await assert.rejects(() => createLocation(second.accessToken, organizationId, 'f37-unauthorized', serverConfig));
+  await assert.rejects(() => createLocation(first.accessToken, secondOrganizationId, 'f37-wrong-scope', serverConfig));
   const afterUnauthorizedAuditCount = Number(query("select count(*) from private.audit_records where action = 'foundation.location.create';"));
   assert.equal(afterUnauthorizedAuditCount, beforeUnauthorizedAuditCount + 1);
   console.log(JSON.stringify({ realAuthUsers: 2, exactOrganizationRead: 'PASS', unauthorizedRead: 'PASS', directOrganizationInsert: 'DENIED', directLocationInsert: 'DENIED', directLocationUpdate: 'DENIED', directLocationDelete: 'DENIED', serverCreateLocation: 'PASS', durableAuditRecord: 'PASS', unauthorizedServerWrite: 'DENIED', unauthorizedAudit: 'NONE', organizationScopeNoLocationInheritance: 'PASS', callerIdentitySpoof: 'DENIED', callerAalSpoof: 'NOT CLIENT-CONTROLLED' }, null, 2));
