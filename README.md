@@ -45,6 +45,10 @@ The service-only outbox worker uses leased row-lock claims and provides at-least
 
 F-41 adds AsyncLocalStorage correlation propagation, exact `debug`/`info`/`warn`/`error` structured JSON logging, recursive `[REDACTED]` handling, service-only durable operational-log append/search boundaries, exact 30-day retention with daily `pg_cron`, and a safe boundary around the frozen F-03 error contract. Audit records, events, and operational logs remain separate. The six frozen F-30 health signals are preserved without automatic backlog thresholds, external observability providers, or external alert transports. F-42 owns backup-health integration. See [docs/architecture/f41-runtime-observability-error-boundaries.md](docs/architecture/f41-runtime-observability-error-boundaries.md).
 
+## F-42 backup and recovery validation
+
+F-42 provides repository-controlled local logical backup, checksum verification, isolated restore validation, recovery-point preflight, and quarterly restore-exercise evidence. It preserves the frozen 30-day rolling retention, PITR/equivalent rapid-recovery requirement, RPO of at most one hour, and RTO of at most four hours. Local timing is tooling evidence only; hosted PITR, supplemental encrypted storage, and representative hosted RTO evidence require separate Project Control approval. See [docs/architecture/f42-backup-recovery-validation.md](docs/architecture/f42-backup-recovery-validation.md).
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:
