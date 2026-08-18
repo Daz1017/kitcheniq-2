@@ -49,6 +49,10 @@ F-41 adds AsyncLocalStorage correlation propagation, exact `debug`/`info`/`warn`
 
 F-42 provides repository-controlled local logical backup, checksum verification, isolated restore validation, recovery-point preflight, and quarterly restore-exercise evidence. It preserves the frozen 30-day rolling retention, PITR/equivalent rapid-recovery requirement, RPO of at most one hour, and RTO of at most four hours. Local timing is tooling evidence only; hosted PITR, supplemental encrypted storage, and representative hosted RTO evidence require separate Project Control approval. See [docs/architecture/f42-backup-recovery-validation.md](docs/architecture/f42-backup-recovery-validation.md).
 
+## F-43 CI/CD and controlled deployment
+
+F-43 defines GitHub Actions CI, immutable revision-bound release evidence, controlled staging deployment, and a fail-closed production deployment surface. Production remains blocked by the mandatory hosted F-42 recovery hold and cannot deploy automatically from `main`. See [docs/architecture/f43-ci-cd-controlled-deployment.md](docs/architecture/f43-ci-cd-controlled-deployment.md).
+
 ## Runtime environment selection
 
 `KITCHENIQ_ENVIRONMENT` is required at runtime and must be exactly one of:

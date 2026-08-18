@@ -23,7 +23,10 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "KITCHENIQ_ENVIRONMENT=automated_test jest --coverage",
-    "verify": "npm run typecheck && npm run test && npm run build"
+    "verify": "npm run typecheck && npm run test && npm run build",
+    "test:deployment-gate": "jest tests/unit/foundation/deployment/f43-production-gate.test.ts --runInBand",
+    "validate:workflows": "node scripts/f43-validate-workflows.js",
+    "release:manifest": "node scripts/f43-release-manifest.js"
   },
   "keywords": [],
   "author": "",

@@ -1,0 +1,78 @@
+name: Foundation CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  KITCHENIQ_ENVIRONMENT: automated_test
+
+jobs:
+  foundation:
+    name: Foundation verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      # actions/checkout v4.3.1
+      - name: Checkout immutable revision
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      # actions/setup-node v5.0.0
+      - name: Configure Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Foundation local verification
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            npx supabase stop >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          test "${KITCHENIQ_ENVIRONMENT}" = "automated_test"
+
+          npx supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,supavisor
+          npx supabase db reset
+          npx supabase test db
+
+          eval "$(npx supabase status -o env | sed -n \
+            -e 's/^API_URL=/export KITCHENIQ_SUPABASE_URL=/p' \
+            -e 's/^ANON_KEY=/export KITCHENIQ_SUPABASE_PUBLIC_KEY=/p')"
+
+          test -n "${KITCHENIQ_SUPABASE_URL:-}"
+          test -n "${KITCHENIQ_SUPABASE_PUBLIC_KEY:-}"
+
+          npm run test:auth:local
+          npm run test:security:local
+          npm run test:reliability:local
+          npm run test:observability:local
+          npm run recovery:exercise:local
+
+          npm run typecheck
+          npm test -- --runInBand
+          npm run build
+          npm run verify
+
+          git diff --check
+
+          unset KITCHENIQ_SUPABASE_URL
+          unset KITCHENIQ_SUPABASE_PUBLIC_KEY
+
+          test -z "$(git status --porcelain)"

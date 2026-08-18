@@ -1,0 +1,168 @@
+name: Controlled Production Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Immutable main-branch commit SHA proposed for production
+        required: true
+        type: string
+      recovery_evidence_path:
+        description: Path to approved recovery-preflight evidence JSON
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+
+concurrency:
+  group: kitcheniq-deploy-production
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: Production deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    env:
+      KITCHENIQ_ENVIRONMENT: production
+      KITCHENIQ_HOSTED_RECOVERY_VALIDATED: ${{ vars.KITCHENIQ_HOSTED_RECOVERY_VALIDATED }}
+      KITCHENIQ_PRODUCTION_DEPLOYMENT_ENABLED: ${{ vars.KITCHENIQ_PRODUCTION_DEPLOYMENT_ENABLED }}
+
+    steps:
+      # actions/checkout v4.3.1
+      - name: Checkout requested revision
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+
+      # actions/setup-node v5.0.0
+      - name: Configure Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Verify immutable main revision
+        env:
+          TARGET_REVISION: ${{ inputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "${KITCHENIQ_ENVIRONMENT}" = "production"
+          [[ "${TARGET_REVISION}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${TARGET_REVISION}"
+
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD origin/main
+
+      - name: Require successful Foundation CI for exact revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REVISION: ${{ inputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          successful_runs="$(
+            gh api \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/foundation-ci.yml/runs?head_sha=${TARGET_REVISION}&status=completed&per_page=100" \
+              --jq '[.workflow_runs[] | select(.conclusion == "success")] | length'
+          )"
+
+          test "${successful_runs}" -gt 0
+
+      - name: Require successful staging deployment for exact revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REVISION: ${{ inputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deployment_ids="$(
+            gh api               "/repos/${GITHUB_REPOSITORY}/deployments?sha=${TARGET_REVISION}&environment=staging&per_page=100"               --jq '.[].id'
+          )"
+
+          staging_success=false
+
+          for deployment_id in ${deployment_ids}; do
+            state="$(
+              gh api                 "/repos/${GITHUB_REPOSITORY}/deployments/${deployment_id}/statuses?per_page=1"                 --jq '.[0].state // ""'
+            )"
+
+            if [ "${state}" = "success" ]; then
+              staging_success=true
+              break
+            fi
+          done
+
+          test "${staging_success}" = "true"
+
+      - name: Enforce hosted recovery hold
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${KITCHENIQ_HOSTED_RECOVERY_VALIDATED:-}" != "true" ]; then
+            echo "Production denied: hosted F-42 recovery validation is not approved."
+            exit 1
+          fi
+
+      - name: Require explicit production activation
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${KITCHENIQ_PRODUCTION_DEPLOYMENT_ENABLED:-}" != "true" ]; then
+            echo "Production deployment is not activated."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute frozen F-42 recovery preflight
+        env:
+          RECOVERY_EVIDENCE_PATH: ${{ inputs.recovery_evidence_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "${RECOVERY_EVIDENCE_PATH}"
+          test -f "${RECOVERY_EVIDENCE_PATH}"
+          npm run recovery:preflight -- "${RECOVERY_EVIDENCE_PATH}"
+
+      - name: Validate production credential presence
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          test -n "${SUPABASE_PROJECT_REF:-}"
+          test -n "${SUPABASE_DB_PASSWORD:-}"
+
+      - name: Deploy source-controlled migrations to production
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx supabase link \
+            --project-ref "${SUPABASE_PROJECT_REF}" \
+            --password "${SUPABASE_DB_PASSWORD}"
+
+          npx supabase db push

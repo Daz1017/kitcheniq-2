@@ -1,0 +1,115 @@
+name: Controlled Staging Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Immutable main-branch commit SHA to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: kitcheniq-deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  staging:
+    name: Staging deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+
+    env:
+      KITCHENIQ_ENVIRONMENT: staging
+
+    steps:
+      # actions/checkout v4.3.1
+      - name: Checkout requested revision
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ inputs.revision }}
+          fetch-depth: 0
+
+      # actions/setup-node v5.0.0
+      - name: Configure Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Verify immutable revision
+        env:
+          TARGET_REVISION: ${{ inputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test "${KITCHENIQ_ENVIRONMENT}" = "staging"
+          [[ "${TARGET_REVISION}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${TARGET_REVISION}"
+
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor HEAD origin/main
+
+      - name: Require successful Foundation CI for exact revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_REVISION: ${{ inputs.revision }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          successful_runs="$(
+            gh api \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/foundation-ci.yml/runs?head_sha=${TARGET_REVISION}&status=completed&per_page=100" \
+              --jq '[.workflow_runs[] | select(.conclusion == "success")] | length'
+          )"
+
+          test "${successful_runs}" -gt 0
+
+      - name: Require explicit staging activation
+        shell: bash
+        env:
+          KITCHENIQ_STAGING_DEPLOYMENT_ENABLED: ${{ vars.KITCHENIQ_STAGING_DEPLOYMENT_ENABLED }}
+        run: |
+          set -euo pipefail
+
+          if [ "${KITCHENIQ_STAGING_DEPLOYMENT_ENABLED:-}" != "true" ]; then
+            echo "Staging deployment is not activated."
+            exit 1
+          fi
+
+      - name: Validate staging credential presence
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "${SUPABASE_ACCESS_TOKEN:-}"
+          test -n "${SUPABASE_PROJECT_REF:-}"
+          test -n "${SUPABASE_DB_PASSWORD:-}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy source-controlled migrations to staging
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          npx supabase link \
+            --project-ref "${SUPABASE_PROJECT_REF}" \
+            --password "${SUPABASE_DB_PASSWORD}"
+
+          npx supabase db push
