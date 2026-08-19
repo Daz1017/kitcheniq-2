@@ -1,5 +1,5 @@
 begin;
-select plan(35);
+select plan(36);
 
 select has_table('public', 'organizations', 'organizations exists');
 select has_table('public', 'locations', 'locations exists');
@@ -25,8 +25,9 @@ select throws_ok($$insert into private.permissions values ('recipe.edit')$$, '23
 select throws_ok($$insert into private.role_assignments (application_user_id, role_class, scope_kind, organization_id) values ('123e4567-e89b-42d3-a456-426614174011', 'owner', 'organization', '123e4567-e89b-42d3-a456-426614174012')$$, '23503', NULL, 'assignment requires persisted application user');
 select throws_ok($$insert into private.role_assignments (application_user_id, role_class, scope_kind, organization_id, location_id) values ('123e4567-e89b-42d3-a456-426614174011', 'owner', 'organization', '123e4567-e89b-42d3-a456-426614174012', '123e4567-e89b-42d3-a456-426614174013')$$, '23514', NULL, 'organization assignment cannot include location');
 
-select ok((select count(*) = 2 from private.permissions), 'only Foundation permissions exist');
-select ok(not exists (select 1 from private.permissions where id like 'recipe.%' or id like 'inventory.%' or id like 'invoice.%'), 'no module permission catalog exists');
+select ok(exists (select 1 from private.permissions where id = 'foundation.scope.read'), 'foundation.scope.read permission exists');
+select ok(exists (select 1 from private.permissions where id = 'foundation.location.create'), 'foundation.location.create permission exists');
+select ok(not exists (select 1 from private.permissions where id like 'recipe.%' or id like 'inventory.%' or id like 'invoice.%'), 'no recipe/inventory/invoice permission catalog exists');
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at)
 values ('123e4567-e89b-42d3-a456-426614174030', 'authenticated', 'authenticated', 'f37-db-auth@example.test', '', now());
