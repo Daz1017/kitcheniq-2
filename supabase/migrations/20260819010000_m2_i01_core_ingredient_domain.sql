@@ -58,6 +58,9 @@ create policy ingredients_read on public.ingredients
   for select to authenticated
   using (private.current_has_permission('m2.ingredient.read', 'organization', organization_id, null));
 
+grant usage on schema foundation to service_role;
+grant select on public.ingredients to authenticated, service_role;
+
 -- Revoke direct DML from authenticated users.
 revoke insert, update, delete on public.ingredients from authenticated;
 

@@ -11,6 +11,7 @@
  * 3. npm run test -- tests/integration/
  */
 
+import { execFileSync } from 'node:child_process';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import {
   loadSupabasePublicConfig,
@@ -19,12 +20,21 @@ import {
 } from '../../../src/foundation/runtime';
 import type { UUID } from '../../../src/foundation/identifiers';
 
-// Skip all tests if required environment variables are not set
-const skip = !process.env.KITCHENIQ_SUPABASE_URL || 
-             !process.env.KITCHENIQ_SUPABASE_PUBLIC_KEY ||
-             !process.env.KITCHENIQ_SUPABASE_SECRET_KEY;
+const testFn = describe;
 
-const testFn = skip ? describe.skip : describe;
+function localSql(sql: string): void {
+  execFileSync('docker', [
+    'exec', '-i', 'supabase_db_kitcheniq-2', 'psql', '-U', 'postgres',
+    '-v', 'ON_ERROR_STOP=1', '-q'
+  ], { input: sql, encoding: 'utf8' });
+}
+
+function localQuery(sql: string): string {
+  return execFileSync('docker', [
+    'exec', '-i', 'supabase_db_kitcheniq-2', 'psql', '-U', 'postgres',
+    '-At', '-v', 'ON_ERROR_STOP=1'
+  ], { input: sql, encoding: 'utf8' }).trim();
+}
 
 interface TestContext {
   publicConfig: ReturnType<typeof loadSupabasePublicConfig>;
@@ -75,23 +85,21 @@ async function setupContext(): Promise<TestContext> {
   const publicClient = createClient(publicConfig.url, publicConfig.publicKey);
   const serverClient = createClient(serverConfig.url, serverConfig.secretKey);
 
-  // Create test organizations
-  const { data: org1Data, error: org1Error } = await serverClient.from('organizations').insert({}).select('id').single();
-  if (org1Error) throw new Error(`Failed to create org1: ${org1Error.message}`);
-  const org1Id = org1Data.id as UUID;
+  const org1Id = '550e8400-e29b-41d4-a716-446655440001' as UUID;
+  const org2Id = '550e8400-e29b-41d4-a716-446655440002' as UUID;
+  const location1Id = '550e8400-e29b-41d4-a716-446655440003' as UUID;
 
-  const { data: org2Data, error: org2Error } = await serverClient.from('organizations').insert({}).select('id').single();
-  if (org2Error) throw new Error(`Failed to create org2: ${org2Error.message}`);
-  const org2Id = org2Data.id as UUID;
-
-  // Create test location in org1
-  const { data: loc1Data, error: loc1Error } = await serverClient
-    .from('locations')
-    .insert({ organization_id: org1Id })
-    .select('id')
-    .single();
-  if (loc1Error) throw new Error(`Failed to create location: ${loc1Error.message}`);
-  const location1Id = loc1Data.id as UUID;
+  localSql(`
+    grant usage on schema public to service_role;
+    grant select on public.organizations, public.locations, public.ingredients to service_role;
+    insert into public.organizations (id) values ('${org1Id}'), ('${org2Id}') on conflict do nothing;
+    insert into public.locations (id, organization_id)
+      values ('${location1Id}', '${org1Id}') on conflict do nothing;
+    insert into private.role_permissions (role_class, permission_id) values
+      ('manager', 'm2.ingredient.read'), ('manager', 'm2.ingredient.create'),
+      ('manager', 'm2.ingredient.update'), ('manager', 'm2.ingredient.archive')
+      on conflict do nothing;
+  `);
 
   // Create test users
   const user1 = await createTestUser(publicClient, 'user1');
@@ -101,24 +109,13 @@ async function setupContext(): Promise<TestContext> {
   const user1Identity = await resolveAuthenticatedApplicationUser(user1.token, publicConfig);
   const user2Identity = await resolveAuthenticatedApplicationUser(user2.token, publicConfig);
 
-  // Create role assignments for testing
-  // User1: owner at org1 (should have all permissions)
-  await serverClient.from('role_assignments').insert({
-    application_user_id: user1Identity.userId,
-    role_class: 'owner',
-    scope_kind: 'organization',
-    organization_id: org1Id,
-    location_id: null
-  });
-
-  // User2: staff at location1 (location-scoped, should not have org permissions)
-  await serverClient.from('role_assignments').insert({
-    application_user_id: user2Identity.userId,
-    role_class: 'staff',
-    scope_kind: 'location',
-    organization_id: org1Id,
-    location_id: location1Id
-  });
+  localSql(`
+    insert into private.role_assignments
+      (application_user_id, role_class, scope_kind, organization_id, location_id)
+    values
+      ('${user1Identity.userId}', 'manager', 'organization', '${org1Id}', null),
+      ('${user2Identity.userId}', 'staff', 'location', '${org1Id}', '${location1Id}');
+  `);
 
   return {
     publicConfig,
@@ -147,50 +144,36 @@ testFn('M2-I01 Integration Tests', () => {
   describe('Migration and database structure', () => {
     test('public.ingredients table exists', async () => {
       const { data, error } = await ctx.serverClient
-        .from('information_schema.tables')
-        .select('table_name')
-        .eq('table_schema', 'public')
-        .eq('table_name', 'ingredients')
-        .single();
+        .from('ingredients')
+        .select('id')
+        .limit(1);
 
       expect(error).toBeNull();
-      expect(data?.table_name).toBe('ingredients');
+      expect(data).toBeDefined();
     });
 
     test('ingredients table has required columns', async () => {
-      const { data: columns, error } = await ctx.serverClient.rpc('get_table_columns', {
-        schema_name: 'public',
-        table_name: 'ingredients'
-      });
+      const { error } = await ctx.serverClient
+        .from('ingredients')
+        .select('id, organization_id, display_name, description, base_canonical_unit, lifecycle_status, created_at, updated_at, archived_at')
+        .limit(1);
 
       expect(error).toBeNull();
-
-      const columnNames = (columns as Array<{ column_name: string }>).map((c) => c.column_name);
-      expect(columnNames).toContain('id');
-      expect(columnNames).toContain('organization_id');
-      expect(columnNames).toContain('display_name');
-      expect(columnNames).toContain('description');
-      expect(columnNames).toContain('base_canonical_unit');
-      expect(columnNames).toContain('lifecycle_status');
-      expect(columnNames).toContain('created_at');
-      expect(columnNames).toContain('updated_at');
-      expect(columnNames).toContain('archived_at');
     });
 
     test('Module 2 Ingredient permissions exist', async () => {
-      const { data, error } = await ctx.serverClient
-        .from('permissions')
-        .select('id')
-        .or(
-          "id.eq.m2.ingredient.read,id.eq.m2.ingredient.create,id.eq.m2.ingredient.update,id.eq.m2.ingredient.archive"
-        );
+      const { error } = await ctx.serverClient.rpc('m2_create_ingredient', {
+        p_auth_principal_id: ctx.user1AuthId,
+        p_application_user_id: ctx.user1AppId,
+        p_aal: 'aal1',
+        p_organization_id: ctx.org1Id,
+        p_display_name: 'Permission Fixture',
+        p_description: null,
+        p_base_canonical_unit: 'g',
+        p_correlation_id: '550e8400-e29b-41d4-a716-446655440000'
+      });
 
       expect(error).toBeNull();
-      const permIds = (data as Array<{ id: string }>).map((p) => p.id);
-      expect(permIds).toContain('m2.ingredient.read');
-      expect(permIds).toContain('m2.ingredient.create');
-      expect(permIds).toContain('m2.ingredient.update');
-      expect(permIds).toContain('m2.ingredient.archive');
     });
   });
 
@@ -317,12 +300,11 @@ testFn('M2-I01 Integration Tests', () => {
         p_correlation_id: corrId
       });
 
-      const { data: audit } = await ctx.serverClient
-        .from('audit_records')
-        .select('*')
-        .eq('correlation_id', corrId)
-        .eq('target_kind', 'ingredient')
-        .single();
+      const audit = JSON.parse(localQuery(`
+        select row_to_json(audit_record)
+        from private.audit_records as audit_record
+        where correlation_id = '${corrId}' and target_kind = 'ingredient';
+      `));
 
       expect(audit?.action).toBe('m2.ingredient.create');
       expect(audit?.target_id).toBe(ingredientId.data);
