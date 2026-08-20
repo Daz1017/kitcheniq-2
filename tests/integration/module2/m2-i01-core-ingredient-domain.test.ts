@@ -20,7 +20,10 @@ import {
 } from '../../../src/foundation/runtime';
 import type { UUID } from '../../../src/foundation/identifiers';
 
-const testFn = describe;
+const skip = !process.env.KITCHENIQ_SUPABASE_URL
+  || !process.env.KITCHENIQ_SUPABASE_PUBLIC_KEY
+  || !process.env.KITCHENIQ_SUPABASE_SECRET_KEY;
+const testFn = skip ? describe.skip : describe;
 
 function localSql(sql: string): void {
   execFileSync('docker', [
