@@ -5,3 +5,5 @@ export * from './purchase-specification';
 export * from './supplier-product-mapping';
 
 export * from './cost-state-history';
+
+export * from './ingredient-claims';
